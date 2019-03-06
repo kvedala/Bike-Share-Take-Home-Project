@@ -69,7 +69,7 @@ def is_station_free(station_id):
     
     :return: True if free space available and False otherwise.
     """
-    if len(STATIONS.loc[station_id, 'bike_id']) == STATIONS.loc[station_id, 'capacity']:
+    if len(STATIONS.loc[STATIONS['id'] == station_id, 'bike_id'].values[0]) == STATIONS.loc[STATIONS['id'] == station_id, 'capacity'].values[0]:
         return False
     return True
 
@@ -78,23 +78,23 @@ def add_bike_to_station(bike_id, station_id):
     Function to update db with bikes assigned to station.
     """
     is_station_free(station_id)
-    if bike_id in STATIONS.loc[station_id, 'bike_id']:
+    if bike_id in STATIONS.loc[STATIONS['id'] == station_id, 'bike_id'].values[0]:
         abort(404, message="Shouldn't be seeing this! Bike is already assigned to the station.")
-    STATIONS.loc[station_id, 'bike_id'].append(bike_id)
+    STATIONS.loc[STATIONS['id'] == station_id, 'bike_id'].values[0].append(bike_id)
     
 def remove_bike_from_station(bike_id, station_id):
     """
     Function to update db with bikes assigned to station.
     """
-    if bike_id in STATIONS.loc[station_id, 'bike_id']:
+    if bike_id not in STATIONS.loc[STATIONS['id'] == station_id, 'bike_id'].values[0]:
         abort(404, message="Shouldn't be seeing this! Bike is not assigned to the station.")
-    STATIONS.loc[station_id, 'bike_id'].remove(bike_id)
+    STATIONS.loc[STATIONS['id'] == station_id, 'bike_id'].values[0].remove(bike_id)
     
 def increment_trip_count(station_id):
     """
     Function to increment db with station trip count by 1.
     """
-    STATIONS.loc[station_id, 'trips'] += 1
+    STATIONS.loc[STATIONS['id'] == station_id, 'trips'] += 1
 
 class Station(Resource):
     '''
@@ -102,7 +102,7 @@ class Station(Resource):
     '''
     def get(self, id):
         station_exists(id)
-        return STATIONS.loc[id-1].to_json(), 200
+        return STATIONS.loc[STATIONS['id'] == station_id].to_json(orient='records'), 200
 
 class Stations(Resource):
     '''

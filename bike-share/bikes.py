@@ -9,12 +9,12 @@ bike_fields = {
     'trips': fields.Integer
 }
 
-BIKES = NULL
+BIKES = pd.DataFrame({}, columns=bike_fields.keys(), dtype='uint8')
 num_bikes = 0
 
 get_parser = reqparse.RequestParser()
 get_parser.add_argument('q', dest='query', default='',
-                        type=str, required=True,
+                        type=str, required=False,
                         choices=('', 'trips'),
                         help='Type of query - "", "trips"')
 put_parser = reqparse.RequestParser()
@@ -26,51 +26,49 @@ put_parser.add_argument('station',
                         help='Optional return station id.')
 
 def bike_exists(bike_id):
-    if bike_id not in BIKES.loc['id']:
+    if bike_id not in BIKES['id'] or BIKES.empty:
         abort(404, message="Bike ID: {} does not exist!".format(bike_id))
 
 class Bike(Resource):
     '''
         Class for actions on a single bike
     '''
-    @marshal_with(bike_fields)
     def get(self, id):
-        id = id - 1
         bike_exists(id)
         args = get_parser.parse_args()
         if args['query'] == '':
-            return BIKES.loc[id].to_json(), 200
+            return BIKES.loc[BIKES['id'] == id].to_json(orient='records'), 200
         elif args['query'].lower() == 'trips':
-            return BIKES.loc[id, 'trips'], 200
-        
-    @marshal_with(bike_fields)
+            return BIKES.loc[BIKES['id'] == id, 'trips'], 200
+        else:
+            return '\{bike/get/{} - something seriously wrong!!\}'.format(id), 400
+
     def put(self, id):
         from stations import is_station_free, remove_bike_from_station, add_bike_to_station, increment_trip_count
-        id = id - 1
         bike_exists(id)
         args = put_parser.parse_args()
         if args['action'].lower() == 'get':
-            if BIKES.loc[id, 'is_free']:
-                BIKES.loc[id, 'is_free'] = False
-                return BIKES.loc[id].to_json(), 200
+            if BIKES.loc[BIKES['id'] == id, 'is_free']:
+                BIKES.loc[BIKES['id'] == id, 'is_free'] = False
+                return BIKES.loc[BIKES['id'] == id].to_json(), 200
             else:
                 abort(400, message="Bike ID {} is not free!".format(id))
         elif args['action'].lower() == 'return':
-            if BIKES.loc[id, 'is_free']:
+            if BIKES.loc[BIKES['id'] == id, 'is_free']:
                 abort(400, message="Bike ID {} is already returned!".format(id))
             else:
-                BIKES.loc[id, 'is_free'] = True
-                BIKES.loc[id, 'trips'] += 1
+                BIKES.loc[BIKES['id'] == id, 'is_free'] = True
+                BIKES.loc[BIKES['id'] == id, 'trips'] += 1
                 
                 # assume to increment the trip count at station where the 
                 # bike was checked out from irrespective of the drop-off station
-                increment_trip_count(BOKES.loc[id, 'station'])
+                increment_trip_count(BIKES.loc[BIKES['id'] == id, 'station'].values[0])
                 
                 if args['station'] >= 0:
                     if is_station_free(args['station']):
-                        remove_bike_from_station(id, BIKES.loc[id, 'station'])
-                        BIKES.loc[id, 'station'] = args['station']
-                        add_bike_to_station(id, BIKES.loc[id, 'station'])
+                        remove_bike_from_station(id, BIKES.loc[BIKES['id'] == id, 'station'].values[0])
+                        BIKES.loc[BIKES['id'] == id, 'station'] = args['station']
+                        add_bike_to_station(BIKES['id'] == id, BIKES.loc[BIKES['id'] == id, 'station'].values[0])
                         msg = 'Returned to new station: {}'.format(args['station'])
                     else:
                         msg = 'No space left in proposed station, returned to original station.'
@@ -78,14 +76,13 @@ class Bike(Resource):
                     msg = 'Returned to original station.'
                 return msg, 200
     
-    @marshal_with(bike_fields)
     def delete(self, id):
         from stations import remove_bike_from_station
         global BIKES
         bike_exists(id)
-        remove_bike_from_station(id, BIKES.loc[id, 'station'])
+        remove_bike_from_station(id, BIKES.loc[BIKES['id'] == id, 'station'].values[0])
         BIKES = BIKES.loc[BIKES['id'] != id]
-        return '', 204
+        return 'Deleted Bike ID: {}'.format(id), 204
 
     
 class Bikes(Resource):
@@ -93,7 +90,7 @@ class Bikes(Resource):
         Class for actions on a list of bikes
     '''
     def get(self):
-        if not BIKES:
+        if BIKES.empty:
             return "{No bikes in the record}", 400
         return BIKES.to_json(orient='records'), 200
     
@@ -106,6 +103,9 @@ class Bikes(Resource):
         global num_bikes
         new_station = random_station()
         tries = 0
+        
+        # the randomly selected station may or maynot have a free space for a new bike. 
+        # keep trying a maximum of 40 times (total capacity)
         while not is_station_free(new_station) and tries < 40:
             new_station = random_station()
             tries += 1
@@ -120,11 +120,10 @@ class Bikes(Resource):
             'trips': 0
         }
         
-        if not BIKES:
-            BIKES = pd.DataFrame(new_bike)
+        if BIKES.empty:
+            BIKES = pd.DataFrame([new_bike])
         else:
             BIKES = BIKES.append(new_bike, ignore_index=True)
-            
         add_bike_to_station(num_bikes, new_station)
         return str(new_bike), 201
 
