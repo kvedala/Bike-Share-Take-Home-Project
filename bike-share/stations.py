@@ -105,6 +105,16 @@ get_parser.add_argument('q', dest='query', default='',
                         type=str, required=False,
                         choices=('', 'trips'),
                         help='Type of query - "", "trips"')
+put_parser = reqparse.RequestParser()
+put_parser.add_argument('action', type=str, required=True,
+                        choices=('add', 'remove'),
+                        help='Type of action - "add" or "remove" sponsor from the station.')
+put_parser.add_argument('sponsor_id', default=0,
+                        type=int, required=False,
+                        help='Sponsor id to remove.')
+put_parser.add_argument('sponsor_name', default='',
+                        type=str, required=False,
+                        help='Sponsor name to remove.')
 
 class Station(Resource):
     '''
@@ -114,11 +124,39 @@ class Station(Resource):
         station_exists(id)
         args = get_parser.parse_args()
         if args['query'] == '':
-            return STATION.loc[STATION['id'] == id].to_json(orient='records'), 200
+            return STATIONS.loc[STATIONS['id'] == id].to_json(orient='records'), 200
         elif args['query'].lower() == 'trips':
-            return str({"trips": STATION.loc[STATION['id'] == id, 'trips'].values[0]}), 200
+            return str({"trips": STATIONS.loc[STATIONS['id'] == id, 'trips'].values[0]}), 200
         else:
             return '\{station/get/{} - something seriously wrong!!\}'.format(id), 400
+        
+    def put(self, id):
+        from sponsors import sponsor_id_from_name
+        station_exists(id)
+        args = put_parser.parse_args()
+        if args['sponsor_id'] == 0 and args['sponsor_name'] == '':
+            abort(404, message='At least sponsor_id or sponsor_name must be provided.')
+
+        if args['action'].lower() == 'add':
+            if args['sponsor_id'] > 0:
+                if args['sponsor_id'] not in STATIONS.loc[STATIONS['id'] == id, 'sponsor'].values[0]:
+                    STATIONS.loc[STATIONS['id'] == id, 'sponsor'].values[0].append(args['sponsor_id'])
+                    return 'Sponsor added', 200
+            else:
+                sponsor_id = sponsor_id_from_name(args['sponsor_name'])
+                STATIONS.loc[STATIONS['id'] == id, 'sponsor'].values[0].append(sponsor_id)
+                return 'Sponsor added', 200
+            return '\{\}', 205
+        elif args['action'].lower() == 'remove':
+            if args['sponsor_id'] > 0:
+                if args['sponsor_id'] in STATIONS.loc[STATIONS['id'] == id, 'sponsor'].values[0]:
+                    STATIONS.loc[STATIONS['id'] == id, 'sponsor'].values[0].remove(args['sponsor_id'])
+                    return 'Sponsor removed', 200
+            else:
+                sponsor_id = sponsor_id_from_name(args['sponsor_name'])
+                STATIONS.loc[STATIONS['id'] == id, 'sponsor'].values[0].remove(args['sponsor_id'])
+                return 'Sponsor removed', 200
+            return '\{\}', 205
 
 class Stations(Resource):
     '''

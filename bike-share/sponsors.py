@@ -1,6 +1,6 @@
 import logging
 import pandas as pd
-from flask_restful import Resource
+from flask_restful import Resource, abort, fields, marshal_with, reqparse
 
 SPONSORS = pd.DataFrame([
             {
@@ -32,14 +32,13 @@ def sponsor_id_from_name(sname):
     if sname in SPONSORS['name']:
         return SPONSORS.loc[SPONSORS['name'] == sname, 'id'].values[0]
     else:
-        return -1
+        abort(404, message='Sponsor "{}" not found!'.format(sname))
 
 def sponsor_name_from_id(id):
     if id in SPONSORS['id']:
         return SPONSORS.loc[SPONSORS['id'] == id, 'name'].values[0]
     else:
-        return -1
-    
+        abort(404, message='Sponsor ID {} not found!'.format(id))
     
 class Sponsor(Resource):
     def get(self):
