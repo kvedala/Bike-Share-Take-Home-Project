@@ -92,9 +92,19 @@ def remove_bike_from_station(bike_id, station_id):
     
 def increment_trip_count(station_id):
     """
-    Function to increment db with station trip count by 1.
+    Function to increment db with station trip count and corresponding sponsor interactions by 1.
     """
+    from sponsors import increment_sponsor_interaction
+    
     STATIONS.loc[STATIONS['id'] == station_id, 'trips'] += 1
+    for sponsor_id in STATIONS.loc[STATIONS['id'] == station_id, 'sponsor'].values[0]:
+        increment_sponsor_interaction(sponsor_id)
+
+get_parser = reqparse.RequestParser()
+get_parser.add_argument('q', dest='query', default='',
+                        type=str, required=False,
+                        choices=('', 'trips'),
+                        help='Type of query - "", "trips"')
 
 class Station(Resource):
     '''
