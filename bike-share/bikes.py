@@ -44,7 +44,7 @@ class Bike(Resource):
         
     @marshal_with(bike_fields)
     def put(self, id):
-        from stations import is_station_free, remove_bike_from_station, add_bike_to_station
+        from stations import is_station_free, remove_bike_from_station, add_bike_to_station, increment_trip_count
         id = id - 1
         bike_exists(id)
         args = put_parser.parse_args()
@@ -60,6 +60,11 @@ class Bike(Resource):
             else:
                 BIKES.loc[id, 'is_free'] = True
                 BIKES.loc[id, 'trips'] += 1
+                
+                # assume to increment the trip count at station where the 
+                # bike was checked out from irrespective of the drop-off station
+                increment_trip_count(BOKES.loc[id, 'station'])
+                
                 if args['station'] >= 0:
                     if is_station_free(args['station']):
                         remove_bike_from_station(id, BIKES.loc[id, 'station'])
