@@ -10,7 +10,9 @@ programming language used.
 ### Source code
 The source code resides in the folder `bike-share`. The design is modularized into:
 bikes, stations and sponsors. Ideailly, each of them would have a relational DB table
-that is accessed and maniupated by these individual files. The folder contains the following files:
+that is accessed and maniupated by these individual files. For simplicity, in this 
+revision, the three data-tables are hard-coded and reside in memory during execution 
+and are non-persistent. The folder contains the following files:
 * `main.py`: Contains the wrapper for the complete API including the API routes and accessing the other resources in the folder
 * `bikes.py`: Contains the logic for accessing the APIs related to bikes. This depends on the `stations.py` module.
 * `stations.py`: Contains the logic for accessing the APIs related to stations and depends on the `sponsors.py` module.
@@ -36,3 +38,16 @@ The solution utilizes the following three very proven python packages:
     C:\Bike-Share-Take-Home-Project> flask run
     ```
   3. This should start the Flask API server on `http://127.0.0.1:5000`. Please verify the URL from the messages printed on the command-prompt. 
+
+The APIs are now available to be invoked using `curl` or any of the numerous other API validation tools.
+
+## API Usage
+### Bikes
+1. `GET /bikes`:
+  Returns the complete bikes DB table in JSON format. The bikes are identified by an integer *id*.
+2. `POST /bikes`:
+  Adds a new bike to the system. The home station is randomly assigned based on the weighted score of the station i.e., higher the score,  greater the probability of the getting assigned a bike.
+3. `DELETE /bike/<int:id>`:
+  Deletes the bike, whose id is provided in the query, from the DB. The statistics from the use of the bike, in the stations are retained.
+4. `GET /bike/<int:id>?q=`: 
+  Retrieves information about a particular bike. The response is returned in JSON format. the query parameter `q` is optional and can be *empty* or *'trips'*. If *?q=empty*, complete details of the bike from the bike DB are returned. If *?q=trips*, the number of trips made by the bike are returned in JSON.
