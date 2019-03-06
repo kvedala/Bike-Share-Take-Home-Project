@@ -23,7 +23,7 @@ SPONSORS = pd.DataFrame([
                 'name': 'Sponsor D',
                 'interactions': 0
             }
-        ]
+        ])
 num_sponsors = SPONSORS.shape[0]
 
 def sponsor_exists(id):

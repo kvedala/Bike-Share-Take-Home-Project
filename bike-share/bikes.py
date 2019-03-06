@@ -26,7 +26,7 @@ put_parser.add_argument('station', default=0,
                         help='Optional return station id.')
 
 def bike_exists(bike_id):
-    if bike_id not in BIKES['id'] or BIKES.empty:
+    if (bike_id not in BIKES['id']) or (BIKES.empty):
         abort(404, message="Bike ID: {} does not exist!".format(bike_id))
 
 class Bike(Resource):
