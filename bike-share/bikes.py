@@ -32,18 +32,88 @@ class Bike(Resource):
     '''
         Class for actions on a single bike
     '''
+    @marshal_with(bike_fields)
     def get(self, id):
+        id = id - 1
         bike_exists(id)
-        return BIKES.loc[id-1].to_json(), 200
+        args = get_parser.parse_args()
+        if args['query'] == '':
+            return BIKES.loc[id].to_json(), 200
+        elif args['query'].lower() == 'trips':
+            return BIKES.loc[id, 'trips'], 200
+        
+    @marshal_with(bike_fields)
+    def put(self, id):
+        from stations import is_station_free, remove_bike_from_station, add_bike_to_station
+        id = id - 1
+        bike_exists(id)
+        args = put_parser.parse_args()
+        if args['action'].lower() == 'get':
+            if BIKES.loc[id, 'is_free']:
+                BIKES.loc[id, 'is_free'] = False
+                return BIKES.loc[id].to_json(), 200
+            else:
+                abort(400, message="Bike ID {} is not free!".format(id))
+        elif args['action'].lower() == 'return':
+            if BIKES.loc[id, 'is_free']:
+                abort(400, message="Bike ID {} is already returned!".format(id))
+            else:
+                BIKES.loc[id, 'is_free'] = True
+                BIKES.loc[id, 'trips'] += 1
+                if args['station'] >= 0:
+                    if is_station_free(args['station']):
+                        remove_bike_from_station(id, BIKES.loc[id, 'station'])
+                        BIKES.loc[id, 'station'] = args['station']
+                        add_bike_to_station(id, BIKES.loc[id, 'station'])
+                        msg = 'Returned to new station: {}'.format(args['station'])
+                    else:
+                        msg = 'No space left in proposed station, returned to original station.'
+                else:    
+                    msg = 'Returned to original station.'
+                return msg, 200
     
-    def post(self, id):
+    @marshal_with(bike_fields)
+    def delete(self, id):
+        from stations import remove_bike_from_station
         bike_exists(id)
+        remove_bike_from_station(id, BIKES.loc[id, 'station'])
+        BIKES = BIKES.loc[BIKES['id'] != id]
+        return '', 204
 
-
+    
 class Bikes(Resource):
     '''
         Class for actions on a list of bikes
     '''
+    def __init__(self):
+        self.num_bikes = 0
+    
+    @marshal_with(bike_fields)
     def get(self):
         return BIKES.to_json(), 200
+    
+    @marshal_with(bike_fields)
+    def post(self):
+        """
+        Adds a new bike to the system.
+        """
+        from stations import random_station, add_bike_to_station, is_station_free
+        new_station = random_station()
+        tries = 0
+        while not is_station_free(new_station) and tries < 40:
+            new_station = random_station()
+            tries += 1
+        if tries == 40:
+            abort(404, message="Unable to add any more bikes. Probably all stations are full.")
         
+        self.num_bikes += 1
+        new_bike = {
+            'id': self.num_bikes,
+            'station': new_station,
+            'is_free': False,
+            'trips': 0
+        }
+        BIKES = BIKES.append(new_bike)
+        add_bike_to_station(self.num_bikes, new_station)
+        return new_bike, 201
+    
