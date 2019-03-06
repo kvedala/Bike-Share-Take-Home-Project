@@ -84,3 +84,19 @@ The APIs are now available to be invoked using `curl` or any of the numerous oth
   Provides the action to *add* or *remove* a sponsor to/from a station. For this action to complete, one of the 
   optional arguments i.e., *sponsor_name* or *sponsor_id* must be provided with. When the API is invoked, 
   checks are made so as to ensure that no duplicates exist when assigning a sponsor.
+9. `DELETE /sponsor/<int:id>`:
+  Deletes the sponsor, whose id is provided in the query, from the DB. The sponsor association is removed 
+  from all stations as well.
+10. `GET /sponsor/<int:id>?q=`: 
+  Retrieves information about a particular sponsor identified by *id*. The response is returned in JSON format. 
+  The query parameter `q` is optional and can be *empty* or *'trips'*. If *?q=<empty>*, complete details of the 
+  sponsor from the station DB are returned. If *?q=trips*, the total number of interactions made by the 
+  sponsor at all the stations is returned in JSON.
+11. `GET /sponsors`:
+  Returns the complete sponsors DB table in JSON format. The sponsors are identified by an integer *id*.
+12. `POST /sponsors?name=`:
+  Adds a new sponsor to the system. The name of the sponsor must be provided as input argume to the API.
+  
+  :warning: This version is able to add only one sponsor at a time.
+
+
