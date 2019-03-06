@@ -2,9 +2,7 @@ import logging
 import pandas as pd
 from flask_restful import Resource
 
-class Sponsor(Resource):
-    def __init__(self):
-        self.Sponsors = pd.DataFrame([
+SPONSORS = pd.DataFrame([
             {
                 'id': 1,
                 'name': 'Sponsor A',
@@ -25,7 +23,24 @@ class Sponsor(Resource):
                 'name': 'Sponsor D',
                 'interactions': 0
             }
-        ])
-        
+        ]
+
+def increment_sponsor_interaction(id):
+    SPONSORS.loc[SPONSORS['id'] == id, 'interactions'] += 1
+    
+def sponsor_id_from_name(sname):
+    if sname in SPONSORS['name']:
+        return SPONSORS.loc[SPONSORS['name'] == sname, 'id'].values[0]
+    else:
+        return -1
+
+def sponsor_name_from_id(id):
+    if id in SPONSORS['id']:
+        return SPONSORS.loc[SPONSORS['id'] == id, 'name'].values[0]
+    else:
+        return -1
+    
+    
+class Sponsor(Resource):
     def get(self):
-        return self.Sponsors, 200
+        return SPONSORS, 200
