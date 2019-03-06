@@ -39,7 +39,7 @@ class Bike(Resource):
         if args['query'] == '':
             return BIKES.loc[BIKES['id'] == id].to_json(orient='records'), 200
         elif args['query'].lower() == 'trips':
-            return BIKES.loc[BIKES['id'] == id, 'trips'], 200
+            return str({"trips": BIKES.loc[BIKES['id'] == id, 'trips'].values[0]}), 200
         else:
             return '\{bike/get/{} - something seriously wrong!!\}'.format(id), 400
 
@@ -50,7 +50,7 @@ class Bike(Resource):
         if args['action'].lower() == 'get':
             if BIKES.loc[BIKES['id'] == id, 'is_free'].values[0]:
                 BIKES.loc[BIKES['id'] == id, 'is_free'] = False
-                return BIKES.loc[BIKES['id'] == id].to_json(), 200
+                return BIKES.loc[BIKES['id'] == id].to_json(orient='records'), 200
             else:
                 abort(400, message="Bike ID {} is not free!".format(id))
         elif args['action'].lower() == 'return':
