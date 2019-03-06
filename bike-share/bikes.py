@@ -12,13 +12,13 @@ bike_fields = {
 BIKES = pd.DataFrame([{}])
 
 def bike_exists(bike_id):
-    if bike_id > BIKES.shape[0] or bike_id <= 0:
+    if bike_id not in BIKES.loc['id']:
         abort(404, message="Bike ID: {} does not exist!".format(bike_id))
 
 class Bike(Resource):
     '''
         Class for actions on a single bike
-    ''' 
+    '''
     def get(self, id):
         bike_exists(id)
         return BIKES.loc[id-1].to_json(), 200
