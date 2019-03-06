@@ -40,7 +40,8 @@ This also simplifies adding authentication to the APIs for a next revision.
     C:\Bike-Share-Take-Home-Project\bike-share> set FLASK_APP=main.py
     C:\Bike-Share-Take-Home-Project\bike-share> flask run
     ```
-  3. This should typically start the API server on `http://127.0.0.1:5000`. Please verify the URL from the messages printed on the command-prompt. 
+  3. This should typically start the API server on `http://127.0.0.1:5000`. 
+  Please verify the URL from the messages printed on the command-prompt. 
 
 The APIs are now available to be invoked using `curl` or any of the numerous other API validation tools.
 
@@ -54,22 +55,32 @@ The APIs are now available to be invoked using `curl` or any of the numerous oth
   randomly picked station is found full to capacity, it checks for another random station and continues 
   to a mximum of 40 tries (arbitrarily chosen). It returns an error message if unable to assign a new bike 
   otherwise, returns the new bike details in JSON format.
+  
+  :warning: This version is able to add only one bike at a time.
+
 3. `DELETE /bike/<int:id>`:
   Deletes the bike, whose id is provided in the query, from the DB. The statistics from the use of the bike, 
   in the stations are retained.
 4. `GET /bike/<int:id>?q=`: 
   Retrieves information about a particular bike. The response is returned in JSON format. the query parameter 
-  `q` is optional and can be *empty* or *'trips'*. If *?q=<empty>*, complete details of the bike from the bike 
+  `q` is optional and can be *empty* or *'trips'*. If *?q=\<empty\>*, complete details of the bike from the bike 
   DB are returned. If *?q=trips*, the number of trips made by the bike are returned in JSON.
 5. `PUT /bike/<int:id>?action=`:
   Provides the action to *get* a bike and to *return* the bike back to the same station or to another. When 
   a bike is taken, it is maked as unavailable until it is returned. When a bike is returned, its trip count 
   is incremented by 1 and the trip count of the bike's origin station is also incremented by 1, irrespective 
-  of the drop-off station. (**NOTE:** The latter part was assumed and not clear from the problem statement.)
+  of the drop-off station.
+
+  :warning:  The latter part was assumed and not clear from the problem statement.
+
 6. `GET /stations`:
   Returns the complete stations DB table in JSON format. The stations are identified by an integer *id*.
 7. `GET /station/<int:id>?q=`: 
-  Retrieves information about a particular station identified by *id*. The response is returned in JSON format. the query 
-  parameter `q` is optional and can be *empty* or *'trips'*. If *?q=<empty>*, complete details of the 
-  station from the station DB are returned. If *?q=trips*, the total number of trips made at the station are returned 
-  in JSON.
+  Retrieves information about a particular station identified by *id*. The response is returned in JSON format. 
+  The query parameter `q` is optional and can be *empty* or *'trips'*. If *?q=<empty>*, complete details of the 
+  station from the station DB are returned. If *?q=trips*, the total number of trips made at the station are 
+  returned in JSON.
+8. `PUT /station/<int:id>?action=<>[&sponsor_id=][&sponsor_name=]`:
+  Provides the action to *add* or *remove* a sponsor to/from a station. For this action to complete, one of the 
+  optional arguments i.e., *sponsor_name* or *sponsor_id* must be provided with. When the API is invoked, 
+  checks are made so as to ensure that no duplicates exist when assigning a sponsor.
