@@ -90,7 +90,7 @@ def remove_bike_from_station(bike_id, station_id):
         abort(404, message="Shouldn't be seeing this! Bike is not assigned to the station.")
     STATIONS.loc[station_id, 'bike_id'].remove(bike_id)
     
-def increment trip_count(station_id):
+def increment_trip_count(station_id):
     """
     Function to increment db with station trip count by 1.
     """
