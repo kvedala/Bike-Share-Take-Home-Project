@@ -1,13 +1,11 @@
 import logging 
 import pandas as pd
-from flask_restful import Resource, abort, fields, marshal_with
+from flask_restful import Resource, abort, fields, marshal_with, reqparse
 
 bike_fields = {
     'id': fields.Integer,
     'station': fields.Integer,
     'is_free': fields.Boolean,
-    'capacity': fields.Integer,
-    'bike_id': fields.List(fields.Integer),
     'trips': fields.Integer
 }
 
