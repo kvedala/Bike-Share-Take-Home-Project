@@ -21,7 +21,7 @@ put_parser = reqparse.RequestParser()
 put_parser.add_argument('action', type=str, required=True,
                         choices=('get', 'return'),
                         help='Type of action - "get" or "return". If "return", optionally provide drop-off station.')
-put_parser.add_argument('station',
+put_parser.add_argument('station', default=0,
                         type=int, required=False,
                         help='Optional return station id.')
 
@@ -44,17 +44,17 @@ class Bike(Resource):
             return '\{bike/get/{} - something seriously wrong!!\}'.format(id), 400
 
     def put(self, id):
-        from stations import is_station_free, remove_bike_from_station, add_bike_to_station, increment_trip_count
+        from stations import station_exists, is_station_free, remove_bike_from_station, add_bike_to_station, increment_trip_count
         bike_exists(id)
         args = put_parser.parse_args()
         if args['action'].lower() == 'get':
-            if BIKES.loc[BIKES['id'] == id, 'is_free']:
+            if BIKES.loc[BIKES['id'] == id, 'is_free'].values[0]:
                 BIKES.loc[BIKES['id'] == id, 'is_free'] = False
                 return BIKES.loc[BIKES['id'] == id].to_json(), 200
             else:
                 abort(400, message="Bike ID {} is not free!".format(id))
         elif args['action'].lower() == 'return':
-            if BIKES.loc[BIKES['id'] == id, 'is_free']:
+            if BIKES.loc[BIKES['id'] == id, 'is_free'].values[0]:
                 abort(400, message="Bike ID {} is already returned!".format(id))
             else:
                 BIKES.loc[BIKES['id'] == id, 'is_free'] = True
@@ -64,7 +64,8 @@ class Bike(Resource):
                 # bike was checked out from irrespective of the drop-off station
                 increment_trip_count(BIKES.loc[BIKES['id'] == id, 'station'].values[0])
                 
-                if args['station'] >= 0:
+                if args['station'] > 0:
+                    station_exists(args['station'])
                     if is_station_free(args['station']):
                         remove_bike_from_station(id, BIKES.loc[BIKES['id'] == id, 'station'].values[0])
                         BIKES.loc[BIKES['id'] == id, 'station'] = args['station']
