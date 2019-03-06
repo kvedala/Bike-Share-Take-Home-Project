@@ -57,8 +57,38 @@ def random_station():
 
     
 def station_exists(station_id):
-    if station_id > STATIONS.shape[0] or station_id <= 0:
+    """
+    Function to check for a valid station and abort if invalid.
+    """
+    if station_id not in STATIONS['id']:
         abort(404, message="Station ID: {} does not exist!".format(station_id))
+
+def is_station_free(station_id):
+    """
+    Function to check if a station is running full capacity.
+    
+    :return: True if free space available and False otherwise.
+    """
+    if len(STATIONS.loc[station_id, 'bike_id']) == STATIONS.loc[station_id, 'capacity']:
+        return False
+    return True
+
+def add_bike_to_station(bike_id, station_id):
+    """
+    Function to update db with bikes assigned to station.
+    """
+    is_station_free(station_id)
+    if bike_id in STATIONS.loc[station_id, 'bike_id']:
+        abort(404, message="Shouldn't be seeing this! Bike is already assigned to the station.")
+    STATIONS.loc[station_id, 'bike_id'].append(bike_id)
+    
+def remove_bike_from_station(bike_id, station_id):
+    """
+    Function to update db with bikes assigned to station.
+    """
+    if bike_id in STATIONS.loc[station_id, 'bike_id']:
+        abort(404, message="Shouldn't be seeing this! Bike is not assigned to the station.")
+    STATIONS.loc[station_id, 'bike_id'].remove(bike_id)
 
 class Station(Resource):
     '''
