@@ -92,11 +92,10 @@ class Bikes(Resource):
     '''
         Class for actions on a list of bikes
     '''
-    def __init__(self):
-        self.num_bikes = 0
-
     def get(self):
-        return BIKES.to_json(), 200
+        if not BIKES:
+            return "{No bikes in the record}", 400
+        return BIKES.to_json(orient='records'), 200
     
     def post(self):
         """
@@ -120,10 +119,12 @@ class Bikes(Resource):
             'is_free': True,
             'trips': 0
         }
+        
         if not BIKES:
             BIKES = pd.DataFrame(new_bike)
         else:
             BIKES = BIKES.append(new_bike, ignore_index=True)
+            
         add_bike_to_station(num_bikes, new_station)
         return str(new_bike), 201
-    
+
