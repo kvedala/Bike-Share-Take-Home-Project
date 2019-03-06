@@ -73,6 +73,30 @@ def is_station_free(station_id):
         return False
     return True
 
+def remove_sponsor_from_station(sponsor_id, station_id=0):
+    """
+    Function to update db with sponsor assigned to station.
+    """
+    station_exists(station_id)
+    if station_id > 0:
+        if sponsor_id not in STATIONS.loc[STATIONS['id'] == station_id, 'sponsor'].values[0]:
+            abort(404, message="Sponsor is not assigned to the station.")
+        STATIONS.loc[STATIONS['id'] == station_id, 'sponsor'].values[0].remove(sponsor_id)
+    else: # remove sponsor from all stations
+        for idx, row in STATIONS.iterrows():
+            if sponsor_id in row['sponsor']:
+                STATIONS.loc[idx, 'sponsor'].values[0].remove(sponsor_id)
+    
+    
+def add_sponsor_to_station(station_id, sponsor_id):
+    """
+    Function to update db with sponsor assigned to station.
+    """
+    station_exists(station_id)
+    if sponsor_id in STATIONS.loc[STATIONS['id'] == station_id, 'sponsor'].values[0]:
+        abort(404, message="Sponsor is already assigned to the station.")
+    STATIONS.loc[STATIONS['id'] == station_id, 'sponsor'].values[0].append(sponsor_id)
+
 def add_bike_to_station(bike_id, station_id):
     """
     Function to update db with bikes assigned to station.
