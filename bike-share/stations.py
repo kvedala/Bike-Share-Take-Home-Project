@@ -144,7 +144,8 @@ class Station(Resource):
                     return 'Sponsor added', 200
             else:
                 sponsor_id = sponsor_id_from_name(args['sponsor_name'])
-                STATIONS.loc[STATIONS['id'] == id, 'sponsor'].values[0].append(sponsor_id)
+                if sponsor_id not in STATIONS.loc[STATIONS['id'] == id, 'sponsor'].values[0]:
+                    STATIONS.loc[STATIONS['id'] == id, 'sponsor'].values[0].append(sponsor_id)
                 return 'Sponsor added', 200
             return '\{\}', 205
         elif args['action'].lower() == 'remove':
@@ -154,7 +155,8 @@ class Station(Resource):
                     return 'Sponsor removed', 200
             else:
                 sponsor_id = sponsor_id_from_name(args['sponsor_name'])
-                STATIONS.loc[STATIONS['id'] == id, 'sponsor'].values[0].remove(args['sponsor_id'])
+                if sponsor_id in STATIONS.loc[STATIONS['id'] == id, 'sponsor'].values[0]:
+                    STATIONS.loc[STATIONS['id'] == id, 'sponsor'].values[0].remove(sponsor_id)
                 return 'Sponsor removed', 200
             return '\{\}', 205
 
