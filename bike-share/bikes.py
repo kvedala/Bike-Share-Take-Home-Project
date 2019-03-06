@@ -9,7 +9,8 @@ bike_fields = {
     'trips': fields.Integer
 }
 
-BIKES = pd.DataFrame([{}])
+BIKES = NULL
+num_bikes = 0
 
 get_parser = reqparse.RequestParser()
 get_parser.add_argument('q', dest='query', default='',
@@ -103,6 +104,7 @@ class Bikes(Resource):
         """
         from stations import random_station, add_bike_to_station, is_station_free
         global BIKES
+        global num_bikes
         new_station = random_station()
         tries = 0
         while not is_station_free(new_station) and tries < 40:
@@ -111,14 +113,17 @@ class Bikes(Resource):
         if tries == 40:
             abort(404, message="Unable to add any more bikes. Probably all stations are full.")
         
-        self.num_bikes += 1
+        num_bikes += 1
         new_bike = {
-            'id': self.num_bikes,
+            'id': num_bikes,
             'station': new_station,
-            'is_free': False,
+            'is_free': True,
             'trips': 0
         }
-        BIKES = BIKES.append(new_bike)
-        add_bike_to_station(self.num_bikes, new_station)
-        return new_bike, 201
+        if not BIKES:
+            BIKES = pd.DataFrame(new_bike)
+        else:
+            BIKES = BIKES.append(new_bike, ignore_index=True)
+        add_bike_to_station(num_bikes, new_station)
+        return str(new_bike), 201
     
