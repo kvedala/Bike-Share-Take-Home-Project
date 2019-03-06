@@ -80,6 +80,7 @@ class Bike(Resource):
     @marshal_with(bike_fields)
     def delete(self, id):
         from stations import remove_bike_from_station
+        global BIKES
         bike_exists(id)
         remove_bike_from_station(id, BIKES.loc[id, 'station'])
         BIKES = BIKES.loc[BIKES['id'] != id]
@@ -92,17 +93,16 @@ class Bikes(Resource):
     '''
     def __init__(self):
         self.num_bikes = 0
-    
-    @marshal_with(bike_fields)
+
     def get(self):
         return BIKES.to_json(), 200
     
-    @marshal_with(bike_fields)
     def post(self):
         """
         Adds a new bike to the system.
         """
         from stations import random_station, add_bike_to_station, is_station_free
+        global BIKES
         new_station = random_station()
         tries = 0
         while not is_station_free(new_station) and tries < 40:
