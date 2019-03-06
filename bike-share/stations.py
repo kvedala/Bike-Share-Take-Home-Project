@@ -102,12 +102,19 @@ class Station(Resource):
     '''
     def get(self, id):
         station_exists(id)
-        return STATIONS.loc[STATIONS['id'] == station_id].to_json(orient='records'), 200
+        args = get_parser.parse_args()
+        if args['query'] == '':
+            return STATION.loc[STATION['id'] == id].to_json(orient='records'), 200
+        elif args['query'].lower() == 'trips':
+            return str({"trips": STATION.loc[STATION['id'] == id, 'trips'].values[0]}), 200
+        else:
+            return '\{station/get/{} - something seriously wrong!!\}'.format(id), 400
 
 class Stations(Resource):
     '''
         Class for actions on a list of stations
     '''
     def get(self):
+        if STATIONS.empty:
+            return "{No stations in the record}", 400
         return STATIONS.to_json(orient='records'), 200
-    
